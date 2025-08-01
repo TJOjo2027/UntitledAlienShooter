@@ -14,7 +14,7 @@ class Settings():
         self.ship_limit = 3
 
         # Bullet Settings
-        self.bullet_width = 6
+        self.bullet_width = 6000
         self.bullet_height = 30
         self.bullet_color = (251, 254, 217)
         self.bullets_allowed = 5
@@ -23,7 +23,7 @@ class Settings():
         self.fleet_drop_speed = 5
 
         # Difficulty Scaling
-        self.diff_scale = 1.1
+        self.diff_scale = 30
 
         # Score Scaling
         self.score_scale = 1.5

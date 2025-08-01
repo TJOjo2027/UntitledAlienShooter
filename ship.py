@@ -1,6 +1,6 @@
 import pygame
 
-import game_functions as gf
+import utilities as ults
 
 class Ship():
 
@@ -11,7 +11,7 @@ class Ship():
         self.game_settings = game_settings
 
         # Load the ship image
-        ship_image_path = gf.resource_path("Game_Images/ship.bmp")
+        ship_image_path = ults.resource_path("Game_Images/ship.bmp")
         self.image = pygame.image.load(ship_image_path)
         self.rect = self.image.get_rect()
         self.screen_rect = screen.get_rect()

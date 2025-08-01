@@ -2,7 +2,7 @@ import pygame
 
 from pygame.sprite import Sprite
 
-import game_functions as gf
+import utilities as ults
 
 class Alien(Sprite):
 
@@ -17,7 +17,7 @@ class Alien(Sprite):
         self.gameSettings = gameSettings
 
         # Load the alien image and set its rect attribute
-        alien_image_path = gf.resource_path("Game_Images/alien_basic.bmp")
+        alien_image_path = ults.resource_path("Game_Images/alien_basic.bmp")
         self.image = pygame.image.load(alien_image_path)
         self.rect = self.image.get_rect()
 

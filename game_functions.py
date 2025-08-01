@@ -14,11 +14,15 @@ from math import ceil
 
 from random import randint
 
+from button import Button
+
 from image_button import ImageButton
+
+import utilities as ults
 
 import json 
 
-def check_keydown_events(event, gameSettings, screen, ship, bullets):
+def check_keydown_events(event, gameSettings, screen, ship, bullets, stats):
 
     # Respond to key presses
 
@@ -29,7 +33,7 @@ def check_keydown_events(event, gameSettings, screen, ship, bullets):
         # Move the ship to the left
         ship.move_left = True
     elif event.key == pygame.K_SPACE:
-        fire_bullet(gameSettings, screen, ship, bullets)
+        fire_bullet(gameSettings, screen, ship, bullets, stats)
     elif event.key == pygame.K_q or event.key == pygame.K_ESCAPE:
         sys.exit()
 
@@ -52,7 +56,7 @@ def check_events(gameSettings, screen, stats, play_button, options_icon, return_
         if event.type == pygame.QUIT:
             sys.exit()
         elif event.type == pygame.KEYDOWN:
-           check_keydown_events(event, gameSettings, screen, ship, bullets)
+           check_keydown_events(event, gameSettings, screen, ship, bullets, stats)
         elif event.type == pygame.KEYUP:
             check_keyup_events(event, ship)
         elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -60,19 +64,23 @@ def check_events(gameSettings, screen, stats, play_button, options_icon, return_
             if not stats.options_active:
                 check_play_button(gameSettings, screen, stats, play_button, ship, aliens, bullets, mouse_x, mouse_y)
                 check_options_icon(screen, stats, options_icon, mouse_x, mouse_y)
+                check_quit_button(screen, stats, options_icon, mouse_x, mouse_y)
             else:
                 check_return_icon(screen, stats, return_icon, mouse_x, mouse_y)
+
+def check_quit_button(screen, stats, quit_button, mouse_x, mouse_y):
+    button_clicked = quit_button.rect.collidepoint(mouse_x, mouse_y)
+    if button_clicked and stats.game_active:
+        stats.game_active = False
 
 def check_return_icon(screen, stats, return_icon, mouse_x, mouse_y):
     button_clicked = return_icon.is_clicked((mouse_x, mouse_y))
     if button_clicked and stats.options_active and not stats.game_active:
-        fade_out(screen, 0.5, pygame.time.Clock(), (0, 0, 0))
         stats.options_active = False
 
 def check_options_icon(screen, stats, options_icon, mouse_x, mouse_y):
     button_clicked = options_icon.is_clicked((mouse_x, mouse_y))
     if button_clicked and not stats.options_active and not stats.game_active:
-        fade_out(screen, 0.5, pygame.time.Clock(), (0, 0, 0))
         stats.options_active = True
 
 def check_play_button(gameSettings, screen, stats, play_button, ship, aliens, bullets, mouse_x, mouse_y):
@@ -95,7 +103,7 @@ def check_play_button(gameSettings, screen, stats, play_button, ship, aliens, bu
         create_fleet(gameSettings, screen, ship, aliens)
         ship.center_ship()
 
-def update_screen(gameSettings, screen, stats, scoreboard, ship, aliens, bullets, play_button):
+def update_screen(screen, scoreboard, ship, aliens, bullets):
 
     # Update images on the screen and flip to the new screen
     # Redraw the screen during each pass through the loop
@@ -125,12 +133,13 @@ def update_bullets(gameSettings, screen, stats, scoreboard, ship, aliens, bullet
     for bullet in bullets.copy():
         if bullet.rect.bottom <= 0:
             bullets.remove(bullet)
+            stats.missed_bullets += 1
 
     # Check for bullet-alien collisions
 
     check_bullet_alien_collisions(gameSettings, screen, stats, scoreboard, ship, aliens, bullets)
 
-def fire_bullet(gameSettings, screen, ship, bullets):
+def fire_bullet(gameSettings, screen, ship, bullets, stats):
 
     # Fire a bullet if limit isn't reached
 
@@ -140,6 +149,7 @@ def fire_bullet(gameSettings, screen, ship, bullets):
 
             newBullet = Bullet(gameSettings, screen, ship)
             bullets.add(newBullet)
+            stats.num_bullets_fired += 1
 
 def create_fleet(gameSettings, screen, ship, aliens):
 
@@ -233,6 +243,7 @@ def check_bullet_alien_collisions(gameSettings, screen, stats, scoreboard, ship,
     if collisions:
         for aliens in collisions.values():
             stats.score += gameSettings.alien_points * len(aliens)
+            stats.num_aliens_destroyed += len(aliens)
             scoreboard.set_score()
         check_high_score(stats, scoreboard)
 
@@ -267,8 +278,62 @@ def ship_hit(gameSettings, stats, screen, ship, aliens, bullets, scoreboard):
         # Pause the game for a moment to show collision
         sleep(1)
     else:
-        stats.game_active = False
-        pygame.mouse.set_visible(True)
+        fade_out(screen, 0.5, pygame.time.Clock(), (0, 0, 0))
+        stats.game_over = True
+        while stats.game_over: # Game Over Menu
+            text_font_path = ults.resource_path("Text_Font/Emulogic-zrEw.ttf")
+            title_font = pygame.font.Font(text_font_path, 60)
+            text_font = pygame.font.Font(text_font_path, 24)
+
+            title_text = title_font.render("Game Over", True, (255, 255, 255)) 
+            title_rect = title_text.get_rect(center=(screen.get_width() // 2, screen.get_height() // 4))
+            screen.blit(title_text, title_rect)
+
+            score_text = text_font.render(f"Score:{stats.score}", True, (255, 255, 255)) 
+            score_rect = score_text.get_rect(center=(screen.get_width() // 2, title_rect.bottom + 30))
+            screen.blit(score_text, score_rect)
+
+            accuracy_text = text_font.render(f"Aliens Destroyed:{stats.num_aliens_destroyed}", True, (255, 255, 255)) 
+            accuracy_rect = accuracy_text.get_rect(center=(screen.get_width() // 2, score_rect.bottom + 30))
+            screen.blit(accuracy_text, accuracy_rect)
+
+            num_bullet_collisions = stats.num_bullets_fired - stats.missed_bullets
+            num_bullets_fired = stats.num_bullets_fired
+            try:
+                shooting_accuracy = (num_bullet_collisions / num_bullets_fired) * 100
+            except ZeroDivisionError:
+                shooting_accuracy = 0
+
+            aliens_text = text_font.render(f"Accuracy:{shooting_accuracy:.2f}%", True, (255, 255, 255)) 
+            aliens_rect = aliens_text.get_rect(center=(screen.get_width() // 2, accuracy_rect.bottom + 30))
+            screen.blit(aliens_text, aliens_rect)
+
+            play_again_button = Button(gameSettings, screen, "Play Again")
+            play_again_button.rect.top = aliens_rect.bottom + 30
+            play_again_button.message_image_rect.center = play_again_button.rect.center
+            play_again_button.draw_button()
+
+            quit_button = Button(gameSettings, screen, "Retry")
+            quit_button.rect.top = play_again_button.rect.bottom + 30
+            quit_button.message_image_rect.center = quit_button.rect.center
+            quit_button.draw_button()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    sys.exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    mouse_x, mouse_y = pygame.mouse.get_pos()
+                    if quit_button.rect.collidepoint(mouse_x, mouse_y):
+                        stats.game_active = False
+                        stats.game_over = False
+                    elif play_again_button.rect.collidepoint(mouse_x, mouse_y):
+                        # Game Start up again on a reset
+                        stats.game_active = False
+                        stats.game_over = False
+
+
+            pygame.display.flip()
+            pygame.mouse.set_visible(True)
 
 def check_aliens_bottom(gameSettings, stats, screen, ship, aliens, bullets):
 
@@ -342,11 +407,9 @@ def draw_scrolled_background_game(screen, backgrounds, scroll_speed):
             leftmost_y = min(background["y_pos_float"] for background in backgrounds)
             background["y_pos_float"] = leftmost_y - background["background_rect"].height
             background["background_rect"].y = int(background["y_pos_float"])
-
         screen.blit(background["background_image"], background["background_rect"])
 
 def fade_out(screen, duration, clock, final_color):
-    # Fades the screen to a solid color over the given duration (in seconds)
     fade_surface = pygame.Surface(screen.get_size())
     fade_surface.fill(final_color)
     fade_surface.set_alpha(0)
@@ -362,7 +425,7 @@ def fade_out(screen, duration, clock, final_color):
 def check_high_score(stats, scoreboard):
     # Load saved high score
     try:
-        high_score_json_path = resource_path("Saves/high_score.json")
+        high_score_json_path = ults.resource_path("Saves/high_score.json")
         with open(high_score_json_path, "r") as file:
             file_contents = json.load(file)
             file_high_score = file_contents.get("high_score", 0)

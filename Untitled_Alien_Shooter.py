@@ -29,12 +29,14 @@ from image_button import ImageButton
 
 from scoreboard import Scoreboard
 
+import utilities as ults
+
 def run_game():
 
     # Initialize game and create screen object
     pygame.init()
     pygame.mixer.init()
-    title_screen_music_path = gf.resource_path("Game_Music/Title Screen BGM.mp3")
+    title_screen_music_path = ults.resource_path("Game_Music/Title Screen BGM.mp3")
     pygame.mixer.music.load(title_screen_music_path)
     pygame.mixer.music.play(-1)
 
@@ -46,12 +48,12 @@ def run_game():
 
     play_button = Button(gameSettings, screen, "Play")
 
-    options_icon_path = gf.resource_path("Game_Images/options_icon.bmp")
+    options_icon_path = ults.resource_path("Game_Images/options_icon.bmp")
     options_icon = ImageButton(screen, options_icon_path, 2)
     options_icon.change_orientation("bottom", "bottom")
     options_icon.change_orientation("left", "left")
 
-    return_icon_path = gf.resource_path("Game_Images/return_icon.bmp")
+    return_icon_path = ults.resource_path("Game_Images/return_icon.bmp")
     return_icon = ImageButton(screen, return_icon_path, 1.5)
     return_icon.change_orientation("bottom", "bottom")
     return_icon.change_orientation("left", "left")
@@ -78,7 +80,7 @@ def run_game():
     gf.create_fleet(gameSettings, screen, userShip, aliens)
 
     # Create an icon for the game window
-    icon_surface = pygame.image.load(gf.resource_path("Game_Images/ship.bmp"))
+    icon_surface = pygame.image.load(ults.resource_path("Game_Images/ship.bmp"))
     pygame.display.set_icon(icon_surface)
 
 
@@ -86,7 +88,7 @@ def run_game():
     
     # Load and position multiple background images for horizontal scrolling
     title_backgrounds = []
-    title_background_path = gf.resource_path("Game_Images/Title_Background.bmp")
+    title_background_path = ults.resource_path("Game_Images/Title_Background.bmp")
     title_background_image = pygame.image.load(title_background_path)
     title_background_width = title_background_image.get_width()
 
@@ -99,7 +101,7 @@ def run_game():
             gf.check_events(gameSettings, screen, stats, play_button, options_icon, return_icon, userShip, aliens, bullets)
 
             # Draw the game title
-            text_font_path = gf.resource_path("Text_Font/Emulogic-zrEw.ttf")
+            text_font_path = ults.resource_path("Text_Font/Emulogic-zrEw.ttf")
             font = pygame.font.Font(text_font_path, 60)
             title_text = font.render("Untitled Alien Shooter", True, (255, 255, 255))   
             title_x = screen.get_width() // 2 - title_text.get_width() // 2
@@ -125,16 +127,15 @@ def run_game():
             pygame.display.flip()
 
     # End Title Screen BGM
-    pygame.mixer.music.fadeout(500)
-    gf.fade_out(screen, 0.5, pygame.time.Clock(), (0, 0, 0))
+    pygame.mixer.music.fadeout(250)
 
-    normal_music_path = gf.resource_path("Game_Music/Normal BGM.mp3")
+    normal_music_path = ults.resource_path("Game_Music/Normal BGM.mp3")
     pygame.mixer.music.load(normal_music_path)
     pygame.mixer.music.play(-1)
 
     # Game Loop
     game_backgrounds = []
-    game_background_path = gf.resource_path("Game_Images/Space_Background.bmp")
+    game_background_path = ults.resource_path("Game_Images/Space_Background.bmp")
     game_background_image = pygame.image.load(game_background_path)
     game_background_height = game_background_image.get_height()
 
@@ -146,5 +147,5 @@ def run_game():
         userShip.update()
         gf.update_bullets(gameSettings, screen, stats, scoreboard, userShip, aliens, bullets)
         gf.update_aliens(gameSettings, stats, screen, userShip, aliens, bullets, scoreboard)
-        gf.update_screen(gameSettings, screen, stats, scoreboard, userShip, aliens, bullets, play_button)
+        gf.update_screen(screen, scoreboard, userShip, aliens, bullets)
 run_game()

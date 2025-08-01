@@ -1,6 +1,6 @@
 import pygame.font
 
-import game_functions as gf
+import utilities as ults
 
 class Scoreboard():
 
@@ -18,7 +18,7 @@ class Scoreboard():
         # Font setttings for scoreboard
         self.board_text_color = (225, 225, 225)
         self.title_text_color = (255, 0, 0)
-        text_font_path = gf.resource_path("Text_Font/Emulogic-zrEw.ttf")
+        text_font_path = ults.resource_path("Text_Font/Emulogic-zrEw.ttf")
         self.font = pygame.font.Font(text_font_path, 24)
 
         # Set the initial score image
