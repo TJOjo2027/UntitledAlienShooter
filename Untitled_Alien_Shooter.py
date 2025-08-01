@@ -113,7 +113,7 @@ def run_game():
             gf.draw_scrolled_background_title(screen, title_backgrounds, 0.25)
             gf.check_events(gameSettings, screen, stats, play_button, options_icon, return_icon, userShip, aliens, bullets)
 
-            # Draw the game title
+            # Draw the options title
             font = pygame.font.Font(text_font_path, 60)
             title_text = font.render("Options", True, (255, 255, 255)) 
             title_x = screen.get_width() // 2 - title_text.get_width() // 2
