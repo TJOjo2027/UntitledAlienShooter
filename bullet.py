@@ -14,8 +14,10 @@ class Bullet(Sprite):
         self.screen = screen
 
         # Create a bullet rect at (0, 0) and then set correct position
+        self.bullet_width = gameSettings.bullet_width
+        self.bullet_height = gameSettings.bullet_height
 
-        self.rect = pygame.Rect(0, 0, gameSettings.bullet_width, gameSettings.bullet_height)
+        self.rect = pygame.Rect(0, 0, self.bullet_width, self.bullet_height)
         self.rect.centerx = ship.rect.centerx
         self.rect.top = ship.rect.top
 
@@ -24,7 +26,7 @@ class Bullet(Sprite):
         self.y = float(self.rect.y)
 
         self.color = gameSettings.bullet_color
-        self.speed_factor = gameSettings.bullet_speed_factor
+        self.speed_factor = 1
     
     def update(self):
 

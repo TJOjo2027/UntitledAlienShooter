@@ -27,8 +27,6 @@ class GameStats():
     def reset_stats(self):
 
         # Initialize statistics that can change throughout the game
-
-        self.ships_left = self.gameSettings.ship_limit
         self.score = 0
         self.stage_number = 1
 
@@ -40,6 +38,13 @@ class GameStats():
 
         # Stats for number of bullets that have missed and left the screen
         self.missed_bullets = 0
+
+        # Power Up Stats
+        self.Bullet_Size_Up = 0
+        self.Bullet_Speed_Up = 0
+        self.Shields = 0
+        self.Main_Piercing = True
+        self.ships_left = self.gameSettings.ship_limit
 
     def load_high_score(self):
         try:

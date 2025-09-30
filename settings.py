@@ -14,7 +14,7 @@ class Settings():
         self.ship_limit = 3
 
         # Bullet Settings
-        self.bullet_width = 6000
+        self.bullet_width = 6
         self.bullet_height = 30
         self.bullet_color = (251, 254, 217)
         self.bullets_allowed = 5
@@ -23,7 +23,7 @@ class Settings():
         self.fleet_drop_speed = 5
 
         # Difficulty Scaling
-        self.diff_scale = 30
+        self.diff_scale = 1.2
 
         # Score Scaling
         self.score_scale = 1.5
@@ -34,9 +34,9 @@ class Settings():
 
         # Set the difficulty scalling factors
 
-        self.ship_speed_factor = 0.5
-        self.bullet_speed_factor = 1.5
-        self.alien_speed_factor = 0.1
+        self.ship_speed_factor = 0.55
+        self.bullet_speed_factor = 1.2
+        self.alien_speed_factor = 0.2
 
         # Scoring
         self.alien_points = 50

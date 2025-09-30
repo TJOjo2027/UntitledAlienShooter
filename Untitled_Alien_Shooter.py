@@ -75,6 +75,8 @@ def run_game():
 
     bullets = Group()
     aliens = Group()
+    alienBullets = Group()
+    loot_drops = Group()
 
     # Create the fleet of aliens
     gf.create_fleet(gameSettings, screen, userShip, aliens)
@@ -98,7 +100,7 @@ def run_game():
 
         if not stats.options_active:
             gf.draw_scrolled_background_title(screen, title_backgrounds, 0.25)
-            gf.check_events(gameSettings, screen, stats, play_button, options_icon, return_icon, userShip, aliens, bullets)
+            gf.check_events(gameSettings, screen, stats, play_button, options_icon, return_icon, userShip, aliens, bullets, alienBullets)
 
             # Draw the game title
             text_font_path = ults.resource_path("Text_Font/Emulogic-zrEw.ttf")
@@ -113,7 +115,7 @@ def run_game():
             pygame.display.flip()
         else:
             gf.draw_scrolled_background_title(screen, title_backgrounds, 0.25)
-            gf.check_events(gameSettings, screen, stats, play_button, options_icon, return_icon, userShip, aliens, bullets)
+            gf.check_events(gameSettings, screen, stats, play_button, options_icon, return_icon, userShip, aliens, bullets, alienBullets)
 
             # Draw the options title
             font = pygame.font.Font(text_font_path, 60)
@@ -138,14 +140,14 @@ def run_game():
     game_background_path = ults.resource_path("Game_Images/Space_Background.bmp")
     game_background_image = pygame.image.load(game_background_path)
     game_background_height = game_background_image.get_height()
-
+ 
     gf.set_scrolling_rect_game(screen, game_backgrounds, game_background_image, game_background_height)
 
     while stats.game_active:
         gf.draw_scrolled_background_game(screen, game_backgrounds, 0.15)
-        gf.check_events(gameSettings, screen, stats, play_button, options_icon, return_icon, userShip, aliens, bullets)
+        gf.check_events(gameSettings, screen, stats, play_button, options_icon, return_icon, userShip, aliens, bullets, alienBullets)
         userShip.update()
-        gf.update_bullets(gameSettings, screen, stats, scoreboard, userShip, aliens, bullets)
-        gf.update_aliens(gameSettings, stats, screen, userShip, aliens, bullets, scoreboard)
-        gf.update_screen(screen, scoreboard, userShip, aliens, bullets)
+        gf.update_bullets(gameSettings, screen, stats, scoreboard, userShip, aliens, bullets, alienBullets, loot_drops)
+        gf.update_aliens(gameSettings, stats, screen, userShip, aliens, bullets, scoreboard, alienBullets)
+        gf.update_screen(screen, scoreboard, userShip, aliens, bullets, alienBullets, loot_drops)
 run_game()

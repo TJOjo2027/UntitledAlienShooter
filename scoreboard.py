@@ -26,6 +26,7 @@ class Scoreboard():
         self.set_high_score()
         self.set_stage_number()
         self.set_lives_left()
+        self.set_shields_left()
 
     def set_score(self):
 
@@ -61,6 +62,8 @@ class Scoreboard():
         self.screen.blit(self.stage_num_image, self.stage_num_rect)
         self.screen.blit(self.lives_title_image, self.lives_title_rect)
         self.screen.blit(self.lives_num_image, self.lives_num_rect)
+        self.screen.blit(self.shields_title_image, self.shields_title_rect)
+        self.screen.blit(self.shields_num_image, self.shields_num_rect)
 
     def set_high_score(self):
 
@@ -128,3 +131,25 @@ class Scoreboard():
         self.lives_num_rect = self.stage_num_image.get_rect()
         self.lives_num_rect.left = self.lives_title_rect.right
         self.lives_num_rect.top = self.stage_num_rect.bottom
+
+    def set_shields_left(self):
+
+        # Renders the current number of lives into an image
+
+        # Title
+        shields_title_string = "Shields:"
+        self.shields_title_image = self.font.render(shields_title_string, True, self.title_text_color)
+
+        # Lives
+        shields_num_string = "{:,}".format(self.stats.Shields)
+        self.shields_num_image = self.font.render(shields_num_string, True, self.board_text_color)
+
+        # Display the number of lives and the title at the top left corner of the screen, below the stage number
+
+        self.shields_title_rect = self.shields_title_image.get_rect()
+        self.shields_title_rect.left = self.screen_rect.left + 20
+        self.shields_title_rect.top = self.lives_title_rect.bottom
+
+        self.shields_num_rect = self.shields_num_image.get_rect()
+        self.shields_num_rect.left = self.shields_title_rect.right
+        self.shields_num_rect.top = self.lives_title_rect.bottom

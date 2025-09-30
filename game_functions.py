@@ -18,11 +18,15 @@ from button import Button
 
 from image_button import ImageButton
 
+from alien_bullet import AlienBullet
+
 import utilities as ults
 
 import json 
 
-def check_keydown_events(event, gameSettings, screen, ship, bullets, stats):
+from treasure_alien_loot import TreasureAlienLoot
+
+def check_keydown_events(event, gameSettings, screen, ship, bullets, stats, alienBullets, aliens):
 
     # Respond to key presses
 
@@ -33,7 +37,7 @@ def check_keydown_events(event, gameSettings, screen, ship, bullets, stats):
         # Move the ship to the left
         ship.move_left = True
     elif event.key == pygame.K_SPACE:
-        fire_bullet(gameSettings, screen, ship, bullets, stats)
+        fire_bullet(gameSettings, screen, ship, bullets, stats, alienBullets, aliens)
     elif event.key == pygame.K_q or event.key == pygame.K_ESCAPE:
         sys.exit()
 
@@ -48,7 +52,7 @@ def check_keyup_events(event, ship):
         # Stop moving the ship to the left
         ship.move_left = False
 
-def check_events(gameSettings, screen, stats, play_button, options_icon, return_icon, ship, aliens, bullets):
+def check_events(gameSettings, screen, stats, play_button, options_icon, return_icon, ship, aliens, bullets, alienBullets):
 
     # Responds to keypresses and mouse events
 
@@ -56,7 +60,7 @@ def check_events(gameSettings, screen, stats, play_button, options_icon, return_
         if event.type == pygame.QUIT:
             sys.exit()
         elif event.type == pygame.KEYDOWN:
-           check_keydown_events(event, gameSettings, screen, ship, bullets, stats)
+           check_keydown_events(event, gameSettings, screen, ship, bullets, stats, alienBullets, aliens)
         elif event.type == pygame.KEYUP:
             check_keyup_events(event, ship)
         elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -103,7 +107,7 @@ def check_play_button(gameSettings, screen, stats, play_button, ship, aliens, bu
         create_fleet(gameSettings, screen, ship, aliens)
         ship.center_ship()
 
-def update_screen(screen, scoreboard, ship, aliens, bullets):
+def update_screen(screen, scoreboard, ship, aliens, bullets, alienBullets, loot_drops):
 
     # Update images on the screen and flip to the new screen
     # Redraw the screen during each pass through the loop
@@ -111,6 +115,12 @@ def update_screen(screen, scoreboard, ship, aliens, bullets):
     # Redraw all bullets behind ship and aliens
     for bullet in bullets.sprites():
         bullet.draw_bullet()
+
+    for alienBullet in alienBullets.sprites():
+        alienBullet.draw_bullet()
+
+    for loot_drop in loot_drops.sprites():
+        loot_drop.draw_bullet()
 
     ship.blitme()
     aliens.draw(screen)
@@ -122,11 +132,20 @@ def update_screen(screen, scoreboard, ship, aliens, bullets):
 
     pygame.display.flip()
 
-def update_bullets(gameSettings, screen, stats, scoreboard, ship, aliens, bullets):
+def update_bullets(gameSettings, screen, stats, scoreboard, ship, aliens, bullets, alienBullets, loot_drops):
+
+    # Give aliens a 0.005% chance of shooting a bullet
+    for alien in aliens:
+        randNum = randint(1, 20000)
+        if randNum == 15:
+            newAlienBullet = AlienBullet(gameSettings, screen, alien)
+            alienBullets.add(newAlienBullet)
 
     # Update bullet positions
 
     bullets.update()
+    alienBullets.update()
+    loot_drops.update()
     
     # Get rid of bullets that have disappeared
 
@@ -135,11 +154,23 @@ def update_bullets(gameSettings, screen, stats, scoreboard, ship, aliens, bullet
             bullets.remove(bullet)
             stats.missed_bullets += 1
 
+    for alienBullet in alienBullets.copy():
+        if alienBullet.rect.top > screen.get_rect().bottom:
+            alienBullets.remove(alienBullet)
+
+    for loot_drop in loot_drops.copy():
+        if loot_drop.rect.top > screen.get_rect().bottom:
+            loot_drops.remove(loot_drop)
+
     # Check for bullet-alien collisions
 
-    check_bullet_alien_collisions(gameSettings, screen, stats, scoreboard, ship, aliens, bullets)
+    check_bullet_alien_collisions(gameSettings, screen, stats, scoreboard, ship, aliens, bullets, alienBullets, loot_drops)
 
-def fire_bullet(gameSettings, screen, ship, bullets, stats):
+    # Check for alienBullet-ship collisions
+
+    check_bullet_ship_collisions(gameSettings, screen, stats, scoreboard, alienBullets, ship, aliens, bullets, loot_drops)
+
+def fire_bullet(gameSettings, screen, ship, bullets, stats, alienBullets, aliens):
 
     # Fire a bullet if limit isn't reached
 
@@ -181,8 +212,8 @@ def create_alien(gameSettings, screen, aliens, alien_number, row_number):
 
     # Roll between having a normal alien or a treasure alien that drops power-ups
 
-    # Treasure aliens have a 2% chance of spawning normally
-    if randint(1, 50) == 1:
+    # Treasure aliens have a 5% chance of spawning normally
+    if randint(1, 20) == 1:
         alien = TreasureAlien(gameSettings, screen)
     else:
         alien = Alien(gameSettings, screen)
@@ -200,7 +231,7 @@ def get_number_rows(gameSettings, ship_height, alien_height):
     number_rows = int(available_space_y / (3.5 * alien_height))
     return number_rows
 
-def update_aliens(gameSettings, stats, screen, ship, aliens, bullets, scoreboard):
+def update_aliens(gameSettings, stats, screen, ship, aliens, bullets, scoreboard, alienBullets):
 
     # Update the positions of all aliens in the fleet based on environment
 
@@ -210,11 +241,11 @@ def update_aliens(gameSettings, stats, screen, ship, aliens, bullets, scoreboard
     # Look for alien-ship collisions
 
     if pygame.sprite.spritecollideany(ship, aliens):
-        ship_hit(gameSettings, stats, screen, ship, aliens, bullets, scoreboard)
+        ship_hit(gameSettings, stats, screen, ship, aliens, bullets, scoreboard, alienBullets)
 
     # Look for alien collisions to the bottom screen
 
-    check_aliens_bottom(gameSettings, stats, screen, ship, aliens, bullets)
+    check_aliens_bottom(gameSettings, stats, screen, ship, aliens, bullets, alienBullets, scoreboard)
 
 def check_fleet_edges(gameSettings, aliens):
 
@@ -234,23 +265,32 @@ def change_fleet_direction(gameSettings, aliens):
     
     gameSettings.fleet_direction *= -1
 
-def check_bullet_alien_collisions(gameSettings, screen, stats, scoreboard, ship, aliens, bullets):
+def check_bullet_alien_collisions(gameSettings, screen, stats, scoreboard, ship, aliens, bullets, alienBullets, loot_drops):
 
     # Respond to any bullets and aliens that have collided
 
-    collisions = pygame.sprite.groupcollide(bullets, aliens, True, True)
+    collisions = pygame.sprite.groupcollide(bullets, aliens, stats.Main_Piercing, True)
 
     if collisions:
         for aliens in collisions.values():
             stats.score += gameSettings.alien_points * len(aliens)
             stats.num_aliens_destroyed += len(aliens)
             scoreboard.set_score()
+            for alien in aliens:
+                if isinstance (alien, TreasureAlien):
+                    
+                    # Create the loot to be dropped
+
+                    newLootDrop = TreasureAlienLoot(gameSettings, screen, alien)
+                    loot_drops.add(newLootDrop)
+
         check_high_score(stats, scoreboard)
 
     if len(aliens) == 0:
 
         # Destroy the Remaining Bullets, speed up the game and Create a New Fleet
         bullets.empty()
+        alienBullets.empty()
 
         # Start a new level and increase the difficulty
         gameSettings.increase_speed()
@@ -260,9 +300,23 @@ def check_bullet_alien_collisions(gameSettings, screen, stats, scoreboard, ship,
         stats.stage_number += 1
         scoreboard.set_stage_number()
 
-def ship_hit(gameSettings, stats, screen, ship, aliens, bullets, scoreboard):
+def check_bullet_ship_collisions(gameSettings, screen, stats, scoreboard, alienBullets, ship, aliens, bullets, loot_drops):
 
-    if stats.ships_left - 1 > 0: # Added -1 because the game loop flag is lowered in the loop
+    death_collision = pygame.sprite.spritecollide(ship, alienBullets, True)
+
+    if death_collision:
+        ship_hit(gameSettings, stats, screen, ship, aliens, bullets, scoreboard, alienBullets)
+
+    loot_collision = pygame.sprite.spritecollide(ship, loot_drops, True)
+    
+    if loot_collision:
+            for loot in loot_collision:
+                loot.Loot_Effects(loot.color, stats, gameSettings, scoreboard)
+    
+
+def ship_hit(gameSettings, stats, screen, ship, aliens, bullets, scoreboard, alienBullets):
+
+    if stats.ships_left - 1 > 0 and stats.Shields <= 0: # Added -1 because the game loop flag is lowered in the loop
         # Decrement the ships left
         stats.ships_left -= 1
         scoreboard.set_lives_left()
@@ -270,6 +324,7 @@ def ship_hit(gameSettings, stats, screen, ship, aliens, bullets, scoreboard):
         # Empty aliens and bullets
         aliens.empty()
         bullets.empty()
+        alienBullets.empty()
 
         # Create new fleet and center the ship
         create_fleet(gameSettings, screen, ship, aliens)
@@ -277,7 +332,7 @@ def ship_hit(gameSettings, stats, screen, ship, aliens, bullets, scoreboard):
 
         # Pause the game for a moment to show collision
         sleep(1)
-    else:
+    elif stats.ships_left - 1 <= 0:
         fade_out(screen, 0.5, pygame.time.Clock(), (0, 0, 0))
         stats.game_over = True
         while stats.game_over: # Game Over Menu
@@ -334,8 +389,10 @@ def ship_hit(gameSettings, stats, screen, ship, aliens, bullets, scoreboard):
 
             pygame.display.flip()
             pygame.mouse.set_visible(True)
+    elif stats.Shields > 0:
+        stats.Shields -= 1
 
-def check_aliens_bottom(gameSettings, stats, screen, ship, aliens, bullets):
+def check_aliens_bottom(gameSettings, stats, screen, ship, aliens, bullets, alienBullets, scoreboard):
 
     # Check if aliens have reached the bottom of the screen
 
@@ -343,7 +400,7 @@ def check_aliens_bottom(gameSettings, stats, screen, ship, aliens, bullets):
 
     for alien in aliens.sprites():
         if alien.rect.bottom >= screen_rect.bottom:
-            ship_hit(gameSettings, stats, screen, ship, aliens, bullets)
+            ship_hit(gameSettings, stats, screen, ship, aliens, bullets, scoreboard, alienBullets)
             break
 
 def set_scrolling_rects_title(screen, backgrounds, background_image, background_width):
